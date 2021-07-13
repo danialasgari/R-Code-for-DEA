@@ -1,0 +1,22 @@
+#Removing : and , form the transcriptome assembly:
+sed 's/,//g' node.fa > node_c.fa
+sed 's/://' node_c.fa> node_cc.fa
+
+
+# before using the transcriptome assembly, empty or redundant nodes should be removed from the dataset:
+
+#1-Removing empty nodes:
+awk -v RS=">" -v FS="\n" -v ORS="" ' { if ($2) print ">"$0 } ' node_cc.fa> Enode.fa
+
+
+#2-Removing duplcate nodes:
+awk '/^>/{f=!d[$1];d[$1]=1}f' Enode.fa> ED_node.fa
+
+
+#Running the blast and making the database out of nodes: 
+module load blast/2.2.31
+makeblastdb -in ED_node.fa -parse_seqids -title "nanodb" -dbtype nucl
+
+
+#Aligning AMPs against nodes:
+megablast -d ED_node.fa -i AMPs.fasta -m 8 > result.csv
